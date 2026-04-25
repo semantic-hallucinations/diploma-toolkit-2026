@@ -216,3 +216,22 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Raw downloaded examples
+/raw_examples/
+
+# Local TeX runtime and generated files
+/.texmf/
+/.texmf-var/
+/.texmf-config/
+/build/
+/compiler-output/
+*.aux
+*.bbl
+*.blg
+*.fls
+*.fdb_latexmk
+*.log
+*.out
+*.toc
+*.synctex.gz
