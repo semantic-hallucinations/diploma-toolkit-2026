@@ -3,9 +3,11 @@ from __future__ import annotations
 
 import argparse
 from datetime import datetime
+import fnmatch
 import os
 import re
 import shutil
+import stat
 import subprocess
 import sys
 import tempfile
@@ -31,6 +33,16 @@ REQUIRED_PROJECT_PATHS = (
     Path("references.tex"),
     Path("biblio"),
 )
+IGNORED_PROJECT_NAMES = (
+    ".git",
+    ".texmf",
+    ".texmf-var",
+    ".texmf-config",
+    "build",
+    "build-error-*",
+    INTERNAL_PDF_NAME,
+    "__pycache__",
+)
 
 
 class CompilerError(Exception):
@@ -43,16 +55,16 @@ class CommandError(CompilerError):
         self.output = output
 
 
-def run(cmd: list[str], *, cwd: Path | None = None) -> None:
+def run(cmd: list[str], *, cwd: Path | None = None, description: str = "Command") -> None:
     try:
         subprocess.run(cmd, cwd=cwd, check=True)
     except FileNotFoundError as exc:
-        raise CompilerError(f"Command not found: {cmd[0]}") from exc
+        raise CompilerError(f"{description} not found: {cmd[0]}") from exc
     except subprocess.CalledProcessError as exc:
-        raise CompilerError(f"Command failed with exit code {exc.returncode}: {' '.join(cmd)}") from exc
+        raise CompilerError(f"{description} failed with exit code {exc.returncode}.") from exc
 
 
-def run_quiet(cmd: list[str], *, cwd: Path | None = None) -> None:
+def run_quiet(cmd: list[str], *, cwd: Path | None = None, description: str = "Command") -> None:
     try:
         result = subprocess.run(
             cmd,
@@ -62,10 +74,10 @@ def run_quiet(cmd: list[str], *, cwd: Path | None = None) -> None:
             text=True,
         )
     except FileNotFoundError as exc:
-        raise CompilerError(f"Command not found: {cmd[0]}") from exc
+        raise CompilerError(f"{description} not found: {cmd[0]}") from exc
     if result.returncode != 0:
         raise CommandError(
-            f"Command failed with exit code {result.returncode}: {' '.join(cmd)}",
+            f"{description} failed with exit code {result.returncode}.",
             result.stdout,
         )
 
@@ -75,30 +87,41 @@ def looks_remote_input(value: str) -> bool:
 
 
 def copy_tree(src: Path, dst: Path, output_pdf_name: str | None = None) -> None:
-    ignored_names = [
-        ".git",
-        ".texmf",
-        ".texmf-var",
-        ".texmf-config",
-        "build",
-        "build-error-*",
-        INTERNAL_PDF_NAME,
-        "__pycache__",
-    ]
+    ignored_names = list(IGNORED_PROJECT_NAMES)
     if output_pdf_name:
         ignored_names.append(output_pdf_name)
+    validate_no_symlinks(src, ignored_names)
     ignored = shutil.ignore_patterns(*ignored_names)
     shutil.copytree(src, dst, ignore=ignored)
 
 
 def extract_zip(src: Path, dst: Path) -> None:
-    with zipfile.ZipFile(src) as archive:
+    dst.mkdir(parents=True, exist_ok=True)
+    root = dst.resolve()
+    try:
+        archive = zipfile.ZipFile(src)
+    except zipfile.BadZipFile as exc:
+        raise CompilerError(f"Invalid zip archive: {src}") from exc
+
+    with archive:
         members = archive.infolist()
         if not members:
             raise CompilerError(f"Zip archive is empty: {src}")
         for member in members:
             validate_zip_member(member, src)
-        archive.extractall(dst)
+            member_path = PurePosixPath(member.filename)
+            target = dst.joinpath(*member_path.parts)
+            if not target.resolve().is_relative_to(root):
+                raise CompilerError(f"Unsafe path in zip archive {src}: {member.filename}")
+            if member.is_dir():
+                target.mkdir(parents=True, exist_ok=True)
+                continue
+            target.parent.mkdir(parents=True, exist_ok=True)
+            try:
+                with archive.open(member) as source, target.open("wb") as output:
+                    shutil.copyfileobj(source, output)
+            except zipfile.BadZipFile as exc:
+                raise CompilerError(f"Invalid zip archive: {src}") from exc
 
 
 def validate_zip_member(member: ZipInfo, archive: Path) -> None:
@@ -107,6 +130,24 @@ def validate_zip_member(member: ZipInfo, archive: Path) -> None:
     member_path = PurePosixPath(member.filename)
     if member_path.is_absolute() or ".." in member_path.parts:
         raise CompilerError(f"Unsafe path in zip archive {archive}: {member.filename}")
+    mode = member.external_attr >> 16
+    if stat.S_IFMT(mode) == stat.S_IFLNK:
+        raise CompilerError(f"Symlinks are not allowed in zip archive {archive}: {member.filename}")
+
+
+def validate_no_symlinks(src: Path, ignored_names: list[str]) -> None:
+    for root, dirnames, filenames in os.walk(src, followlinks=False):
+        dirnames[:] = [name for name in dirnames if not should_ignore(name, ignored_names)]
+        for name in [*dirnames, *filenames]:
+            if should_ignore(name, ignored_names):
+                continue
+            path = Path(root) / name
+            if path.is_symlink():
+                raise CompilerError(f"Symlinks are not allowed in project directories: {path}")
+
+
+def should_ignore(name: str, patterns: list[str]) -> bool:
+    return any(fnmatch.fnmatch(name, pattern) for pattern in patterns)
 
 
 def find_project_root(base: Path) -> Path:
@@ -173,6 +214,8 @@ def prepare_input(input_value: str, temp_dir: Path) -> tuple[Path, Path]:
         return project, input_path
     if not input_path.is_file():
         raise CompilerError(f"Input does not exist: {input_path}")
+    if input_path.suffix.lower() != ".zip":
+        raise CompilerError(f"Only .zip archives are supported: {input_path}")
     if not zipfile.is_zipfile(input_path):
         raise CompilerError(f"Only local project directories and zip archives are supported: {input_path}")
     extract_zip(input_path, raw_dir / "zip")
@@ -209,7 +252,7 @@ def ensure_docker_available() -> None:
 
 
 def build_image(image: str, compiler_dir: Path) -> None:
-    run(["docker", "build", "-t", image, str(compiler_dir)])
+    run(["docker", "build", "-t", image, str(compiler_dir)], description="Docker image build")
 
 
 def docker_run_args(project: Path, output_dir: Path, image: str) -> list[str]:
@@ -222,7 +265,7 @@ def docker_run_args(project: Path, output_dir: Path, image: str) -> list[str]:
         "-e",
         "HOME=/tmp",
         "-v",
-        f"{project}:/workspace",
+        f"{project}:/workspace:ro",
         "-v",
         f"{output_dir}:/out",
     ]
@@ -306,7 +349,7 @@ def main() -> int:
         build_output.mkdir()
 
         try:
-            run_quiet(docker_run_args(project, build_output, args.image))
+            run_quiet(docker_run_args(project, build_output, args.image), description="Docker compiler run")
         except CompilerError as exc:
             error_dir = copy_error_logs(build_output, output_dir, exc)
             raise CompilerError(f"Build failed. Logs copied to: {error_dir}") from None
@@ -325,4 +368,7 @@ if __name__ == "__main__":
         raise SystemExit(main())
     except CompilerError as exc:
         print(f"Error: {exc}", file=sys.stderr)
+        raise SystemExit(1)
+    except OSError as exc:
+        print(f"Error: Filesystem error: {exc}", file=sys.stderr)
         raise SystemExit(1)
