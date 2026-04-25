@@ -20,31 +20,38 @@ docker compose up -d --build
 Build a local project directory:
 
 ```sh
-python3 compiler/diploma_compile.py /path/to/project -o /path/to/output
+python3 compiler/diploma_compile.py /path/to/project
 ```
+
+PDF and logs will be written to `/path/to/project/build/`.
 
 Build a local zip archive:
 
 ```sh
-python3 compiler/diploma_compile.py /path/to/project.zip -o /path/to/output
+python3 compiler/diploma_compile.py /path/to/project.zip
 ```
+
+PDF and logs will be written to `/path/to/build/`.
 
 `examples/diploma_template/` is the example diploma project directory included
 in this repository:
 
 ```sh
-python3 compiler/diploma_compile.py examples/diploma_template -o compiler-output/diploma_template
+python3 compiler/diploma_compile.py examples/diploma_template
 ```
+
+PDF and logs will be written to `examples/diploma_template/build/`.
 
 ## Output
 
 `-o` is the output directory. It is created automatically and receives the PDF
 and build logs.
 
-If `-o` is omitted:
+Use `-o` only when you want a custom output directory:
 
-- project directory output goes to `<project>/build/diploma_report.pdf`
-- zip archive output goes to `<archive-parent>/build/diploma_report.pdf`
+```sh
+python3 compiler/diploma_compile.py /path/to/project -o /path/to/output
+```
 
 Repeated builds overwrite files in the same output directory. Temporary LaTeX
 files are removed automatically.
