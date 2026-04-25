@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+from datetime import datetime
 import os
 import re
 import shutil
@@ -16,8 +17,8 @@ from zipfile import ZipInfo
 DEFAULT_IMAGE = "diploma-toolkit/compiler:local"
 MAIN_TEX = Path("diploma/diploma_report.tex")
 JOB_NAME = "diploma_report"
-OUTPUT_FILES = (
-    f"{JOB_NAME}.pdf",
+INTERNAL_PDF_NAME = f"{JOB_NAME}.pdf"
+LOG_FILES = (
     f"{JOB_NAME}.log",
     "pdflatex-1.log",
     "bibtex.log",
@@ -34,6 +35,12 @@ REQUIRED_PROJECT_PATHS = (
 
 class CompilerError(Exception):
     pass
+
+
+class CommandError(CompilerError):
+    def __init__(self, message: str, output: str = "") -> None:
+        super().__init__(message)
+        self.output = output
 
 
 def run(cmd: list[str], *, cwd: Path | None = None) -> None:
@@ -57,23 +64,30 @@ def run_quiet(cmd: list[str], *, cwd: Path | None = None) -> None:
     except FileNotFoundError as exc:
         raise CompilerError(f"Command not found: {cmd[0]}") from exc
     if result.returncode != 0:
-        print(result.stdout, end="")
-        raise CompilerError(f"Command failed with exit code {result.returncode}: {' '.join(cmd)}")
+        raise CommandError(
+            f"Command failed with exit code {result.returncode}: {' '.join(cmd)}",
+            result.stdout,
+        )
 
 
 def looks_remote_input(value: str) -> bool:
     return value.startswith(("http://", "https://", "ssh://", "git://", "git@"))
 
 
-def copy_tree(src: Path, dst: Path) -> None:
-    ignored = shutil.ignore_patterns(
+def copy_tree(src: Path, dst: Path, output_pdf_name: str | None = None) -> None:
+    ignored_names = [
         ".git",
         ".texmf",
         ".texmf-var",
         ".texmf-config",
         "build",
+        "build-error-*",
+        INTERNAL_PDF_NAME,
         "__pycache__",
-    )
+    ]
+    if output_pdf_name:
+        ignored_names.append(output_pdf_name)
+    ignored = shutil.ignore_patterns(*ignored_names)
     shutil.copytree(src, dst, ignore=ignored)
 
 
@@ -152,7 +166,7 @@ def prepare_input(input_value: str, temp_dir: Path) -> tuple[Path, Path]:
 
     input_path = Path(input_value).expanduser().resolve()
     if input_path.is_dir():
-        copy_tree(input_path, work_dir)
+        copy_tree(input_path, work_dir, output_pdf_filename(input_path))
         project = find_project_root(work_dir)
         validate_project(project)
         normalize_project(project)
@@ -165,7 +179,7 @@ def prepare_input(input_value: str, temp_dir: Path) -> tuple[Path, Path]:
 
     discovered = find_project_root(raw_dir)
     validate_project(discovered)
-    copy_tree(discovered, work_dir)
+    copy_tree(discovered, work_dir, output_pdf_filename(input_path))
     normalize_project(work_dir)
     return work_dir, input_path
 
@@ -218,13 +232,31 @@ def docker_run_args(project: Path, output_dir: Path, image: str) -> list[str]:
     return args
 
 
-def copy_outputs(build_dir: Path, output_dir: Path) -> None:
+def copy_pdf(build_dir: Path, output_dir: Path, pdf_name: str) -> Path:
     validate_output_dir(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
-    for name in OUTPUT_FILES:
+    src = build_dir / INTERNAL_PDF_NAME
+    if not src.is_file():
+        raise CompilerError(f"PDF was not produced: {src}")
+    dst = output_dir / pdf_name
+    shutil.copy2(src, dst)
+    return dst
+
+
+def copy_error_logs(build_dir: Path, output_dir: Path, error: Exception) -> Path:
+    validate_output_dir(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    error_dir = output_dir / f"build-error-{datetime.now().strftime('%Y-%m-%d_%H-%M-%S-%f')}"
+    error_dir.mkdir(parents=True, exist_ok=False)
+    for name in LOG_FILES:
         src = build_dir / name
         if src.is_file():
-            shutil.copy2(src, output_dir / name)
+            shutil.copy2(src, error_dir / name)
+    command_output = getattr(error, "output", "")
+    if command_output:
+        (error_dir / "docker-output.log").write_text(command_output, encoding="utf-8")
+    (error_dir / "error.txt").write_text(f"{error}\n", encoding="utf-8")
+    return error_dir
 
 
 def validate_output_dir(output_dir: Path) -> None:
@@ -234,8 +266,13 @@ def validate_output_dir(output_dir: Path) -> None:
 
 def default_output_dir(input_value: str, original_input: Path) -> Path:
     if original_input.is_dir():
-        return original_input / "build"
-    return original_input.parent / "build"
+        return original_input
+    return original_input.parent
+
+
+def output_pdf_filename(original_input: Path) -> str:
+    stem = original_input.stem if original_input.is_file() else original_input.name
+    return f"{stem or JOB_NAME}.pdf"
 
 
 def parse_args() -> argparse.Namespace:
@@ -243,7 +280,7 @@ def parse_args() -> argparse.Namespace:
         description="Build a BSUIR diploma LaTeX project into PDF using Docker.",
     )
     parser.add_argument("input", help="Local path to a project directory or zip archive.")
-    parser.add_argument("-o", "--output-dir", type=Path, help="Directory for PDF and build logs.")
+    parser.add_argument("-o", "--output-dir", type=Path, help="Directory for the resulting PDF.")
     parser.add_argument("--image", default=DEFAULT_IMAGE, help=f"Docker image name. Default: {DEFAULT_IMAGE}")
     parser.add_argument("--build-image", action="store_true", help="Build the Docker image before compiling.")
     parser.add_argument("--no-auto-build", action="store_true", help="Fail if the Docker image is missing.")
@@ -263,21 +300,22 @@ def main() -> int:
         temp_dir = Path(temp)
         project, original_input = prepare_input(args.input, temp_dir)
         output_dir = (args.output_dir or default_output_dir(args.input, original_input)).expanduser().resolve()
+        output_pdf = output_pdf_filename(original_input)
         validate_output_dir(output_dir)
         build_output = temp_dir / "out"
         build_output.mkdir()
 
         try:
             run_quiet(docker_run_args(project, build_output, args.image))
-        except CompilerError:
-            copy_outputs(build_output, output_dir)
-            raise
+        except CompilerError as exc:
+            error_dir = copy_error_logs(build_output, output_dir, exc)
+            raise CompilerError(f"Build failed. Logs copied to: {error_dir}") from None
 
-        pdf = build_output / f"{JOB_NAME}.pdf"
-        if not pdf.is_file():
-            raise CompilerError(f"PDF was not produced: {pdf}")
-        copy_outputs(build_output, output_dir)
-        print(output_dir / pdf.name)
+        try:
+            print(copy_pdf(build_output, output_dir, output_pdf))
+        except CompilerError as exc:
+            error_dir = copy_error_logs(build_output, output_dir, exc)
+            raise CompilerError(f"Build failed. Logs copied to: {error_dir}") from None
 
     return 0
 
