@@ -33,4 +33,15 @@ jobs:
           context: compiler
           file: compiler/Dockerfile
           platforms: ${{ matrix.platform }}
+          load: ${{ matrix.platform == 'linux/amd64' }}
           push: false
+          tags: diploma-toolkit/compiler:local
+
+      - name: Compile example project
+        if: matrix.platform == 'linux/amd64'
+        run: |
+          mkdir -p /tmp/diploma-output
+          python3 compiler/diploma_compile.py examples/diploma_template \
+            -o /tmp/diploma-output \
+            --no-auto-build
+          test -s /tmp/diploma-output/diploma_template.pdf
