@@ -7,6 +7,11 @@
 - `docs/software-architecture-diagrams.md` - какие UML, ERD, BPMN, DMN, DFD,
   C4, SysML, ArchiMate, ML/data pipeline и другие software/AI диаграммы
   уместны в дипломе.
+- `docs/formatting-requirements.md` - формальные требования к оформлению
+  рисунков, линий, стрелок, цветов, подписей и ГОСТ-схем.
+- `docs/generation-capabilities.md` - из каких источников можно генерировать
+  диаграммы, какими инструментами и где есть риск не выполнить требования
+  идеально.
 - `docs/sources.md` - источники по нотациям, инструментам и локальным
   материалам БГУИР/ГОСТ.
 

@@ -24,8 +24,12 @@
   `https://docs.structurizr.com/dsl`
 - Mermaid documentation:
   `https://mermaid.js.org/intro/`
+- Mermaid theme configuration:
+  `https://mermaid.js.org/config/theming.html`
 - PlantUML:
   `https://plantuml.com/`
+- PlantUML skinparam:
+  `https://plantuml.com/skinparam`
 - draw.io documentation:
   `https://www.drawio.com/doc/`
 
