@@ -1,0 +1,49 @@
+name: Compiler Example
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  compile-example:
+    name: Compile example project
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build compiler image
+        uses: docker/build-push-action@v6
+        with:
+          context: compiler
+          file: compiler/Dockerfile
+          platforms: linux/amd64
+          load: true
+          push: false
+          tags: diploma-toolkit/compiler:local
+
+      - name: Install PDF inspection tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends poppler-utils
+
+      - name: Compile and inspect example project
+        run: |
+          set -euo pipefail
+          output_dir="$(mktemp -d)"
+          python3 compiler/diploma_compile.py examples/diploma_template \
+            -o "$output_dir" \
+            --no-auto-build
+
+          pdf="$output_dir/diploma_template.pdf"
+          test -s "$pdf"
+
+          pdfinfo "$pdf" | tee "$output_dir/pdfinfo.txt"
+          awk '/^Pages:/ { if ($2 != 23) exit 1; found = 1 } END { exit found ? 0 : 1 }' "$output_dir/pdfinfo.txt"
+          grep -E '^Page size: +[0-9.]+ x [0-9.]+ pts \(A4\)$' "$output_dir/pdfinfo.txt"

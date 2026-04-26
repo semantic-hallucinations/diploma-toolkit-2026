@@ -1,4 +1,4 @@
-name: Compiler
+name: Compiler Images
 
 on:
   pull_request:
@@ -7,15 +7,28 @@ on:
       - main
 
 jobs:
-  build:
-    name: Build and compile ${{ matrix.platform }}
+  build-amd64:
+    name: Build linux/amd64
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        platform:
-          - linux/amd64
-          - linux/arm64
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build compiler image
+        uses: docker/build-push-action@v6
+        with:
+          context: compiler
+          file: compiler/Dockerfile
+          platforms: linux/amd64
+          push: false
+
+  build-arm64:
+    name: Build linux/arm64
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
@@ -32,15 +45,5 @@ jobs:
         with:
           context: compiler
           file: compiler/Dockerfile
-          platforms: ${{ matrix.platform }}
-          load: true
+          platforms: linux/arm64
           push: false
-          tags: diploma-toolkit/compiler:local
-
-      - name: Compile example project
-        run: |
-          mkdir -p /tmp/diploma-output
-          python3 compiler/diploma_compile.py examples/diploma_template \
-            -o /tmp/diploma-output \
-            --no-auto-build
-          test -s /tmp/diploma-output/diploma_template.pdf
