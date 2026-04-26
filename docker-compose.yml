@@ -8,5 +8,3 @@ services:
     entrypoint: ["/bin/sh", "-lc"]
     command:
       - "trap 'exit 0' INT TERM; while true; do sleep 86400 & wait $$!; done"
-    volumes:
-      - ./compiler-output:/out

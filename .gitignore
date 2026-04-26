@@ -225,7 +225,6 @@ __marimo__/
 /.texmf-var/
 /.texmf-config/
 /build/
-/compiler-output/
 build-error-*/
 diploma_report.pdf
 diploma_template.pdf
