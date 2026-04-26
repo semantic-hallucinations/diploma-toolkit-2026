@@ -64,3 +64,24 @@ The current page links these files, but they returned `404` during retrieval on
 - Search-result confirmation of VAK examples referring to `СТБ 7.1-2024`:
   `https://vak.gov.by/node/8026`
 
+## Unofficial / Community References
+
+- Google Docs checklist `Чек-лист оформления материалов ДП`:
+  `https://docs.google.com/document/d/1buauo5WyjLUBJfx29Wskj8kRExgwJseLUz8SEQR8Ew0/edit?tab=t.0`
+
+  Saved as `standards/unofficial/unofficial-dp-materials-checklist.docx`.
+  This is not an official source and must be checked against `СТП 01-2024` and
+  current normal-control requirements.
+
+## Tooling References
+
+- Poppler `pdfinfo` manpage:
+  `https://manpages.debian.org/bookworm/poppler-utils/pdfinfo.1.en.html`
+- Tesseract documentation:
+  `https://tesseract-ocr.github.io/`
+- Pandoc User's Guide:
+  `https://pandoc.org/MANUAL.html`
+- QPDF manual:
+  `https://qpdf.readthedocs.io/_/downloads/en/latest/pdf/`
+- MuPDF documentation:
+  `https://mupdf.readthedocs.io/`
