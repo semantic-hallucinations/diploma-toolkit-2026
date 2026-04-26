@@ -26,6 +26,9 @@
   записки: поля, шрифт, структура, рисунки, таблицы, формулы, источники.
 - `notes/diagrams-and-flowcharts.md` - правила по блок-схемам, схемам
   алгоритмов, программ, данных, систем и другим графическим материалам.
+- `notes/software-architecture-diagrams.md` - какие UML, ERD, BPMN, DMN, DFD,
+  C4, SysML, ArchiMate и другие software/AI диаграммы можно использовать в
+  дипломе.
 - `notes/template-audit-checklist.md` - чеклист для проверки LaTeX-шаблона и
   собранного PDF.
 - `notes/standards-status.md` - какие ГОСТ/СТБ актуальны и где есть спорный
@@ -144,6 +147,11 @@
   - что использовать для блок-схем и графических материалов: `ГОСТ 19.701-90`
   для алгоритмов/программ/данных/систем, `ГОСТ 2.701-2008` для видов и типов
   схем, и как это применять к AI/software дипломам.
+
+- `notes/software-architecture-diagrams.md`
+  - каталог прикладных диаграмм для software/AI диплома: UML class, sequence,
+  use-case, activity, state, component, deployment, ERD, BPMN, DMN, DFD, C4,
+  SysML, ArchiMate, ML/data pipeline и другие пояснительные схемы.
 
 - `notes/template-audit-checklist.md`
   - чеклист для будущей проверки шаблона: страница, поля, шрифт, структура,
