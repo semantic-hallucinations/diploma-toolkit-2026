@@ -1,4 +1,4 @@
-name: Compiler Image
+name: Compiler
 
 on:
   pull_request:
@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    name: Build ${{ matrix.platform }}
+    name: Build and compile ${{ matrix.platform }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -33,12 +33,11 @@ jobs:
           context: compiler
           file: compiler/Dockerfile
           platforms: ${{ matrix.platform }}
-          load: ${{ matrix.platform == 'linux/amd64' }}
+          load: true
           push: false
           tags: diploma-toolkit/compiler:local
 
       - name: Compile example project
-        if: matrix.platform == 'linux/amd64'
         run: |
           mkdir -p /tmp/diploma-output
           python3 compiler/diploma_compile.py examples/diploma_template \
