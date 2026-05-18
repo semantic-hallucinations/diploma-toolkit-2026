@@ -223,8 +223,7 @@ __marimo__/
 # Local source documents for economic-justification work
 /economic-justification/private/
 /economic-justification/assistant-notes.md
-/economic-justification/result/*
-!/economic-justification/result/.gitkeep
+/economic-justification/result/
 
 # Local TeX runtime and generated files
 /.texmf/
