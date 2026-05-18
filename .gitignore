@@ -220,6 +220,12 @@ __marimo__/
 # Raw downloaded examples
 /raw_examples/
 
+# Local source documents for economic-justification work
+/economic-justification/private/
+/economic-justification/assistant-notes.md
+/economic-justification/result/*
+!/economic-justification/result/.gitkeep
+
 # Local TeX runtime and generated files
 /.texmf/
 /.texmf-var/
