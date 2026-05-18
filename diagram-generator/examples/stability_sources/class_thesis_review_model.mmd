@@ -1,0 +1,87 @@
+classDiagram
+    class ThesisSubmission {
+        +uuid id
+        +string status
+        +datetime uploadedAt
+        +register()
+        +requestRevision()
+    }
+    class SourceArchive {
+        +Path rootPath
+        +string checksum
+        +unpack()
+        +scanFiles()
+    }
+    class DocumentManifest {
+        +string title
+        +string department
+        +validateRequiredFiles()
+    }
+    class ReviewJob {
+        +uuid id
+        +int attempt
+        +start()
+        +finish()
+    }
+    class ParserAdapter {
+        <<interface>>
+        +supports()
+        +parse()
+    }
+    class LatexParser {
+        +parseTexTree()
+        +extractBibliography()
+    }
+    class DocxParser {
+        +readParagraphs()
+        +extractStyles()
+    }
+    class SimilarityAnalyzer {
+        +float threshold
+        +compareSections()
+        +rankFragments()
+    }
+    class CitationResolver {
+        +resolveDoi()
+        +normalizeReference()
+    }
+    class ReviewReport {
+        +string summary
+        +int warningCount
+        +renderPdf()
+    }
+    class SupervisorDecision {
+        +string decision
+        +string comment
+        +approve()
+        +reject()
+    }
+    class NotificationSink {
+        <<interface>>
+        +send()
+    }
+    class EmailSink {
+        +buildMessage()
+        +send()
+    }
+    class AuditEvent {
+        +uuid actorId
+        +string action
+        +record()
+    }
+
+    ThesisSubmission *-- SourceArchive : contains
+    SourceArchive --> DocumentManifest : scans
+    ThesisSubmission --> ReviewJob : schedules
+    ReviewJob --> ParserAdapter : uses
+    ParserAdapter <|.. LatexParser : implements
+    ParserAdapter <|.. DocxParser : implements
+    ReviewJob --> SimilarityAnalyzer : runs
+    ReviewJob --> CitationResolver : resolves
+    SimilarityAnalyzer --> ReviewReport : contributes
+    CitationResolver --> ReviewReport : contributes
+    ReviewReport o-- SupervisorDecision : reviewed_by
+    SupervisorDecision --> NotificationSink : notifies
+    NotificationSink <|.. EmailSink : implements
+    ThesisSubmission --> AuditEvent : records
+    SupervisorDecision --> AuditEvent : records

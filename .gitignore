@@ -220,6 +220,19 @@ __marimo__/
 # Raw downloaded examples
 /raw_examples/
 
+# Local/editor files
+.DS_Store
+**/.DS_Store
+
+# Local scratch work that is not part of this repository
+/agency-kernel/
+/scripts/
+
+# Diagram generator local dependencies and rendered artifacts
+/diagram-generator/node_modules/
+/diagram-generator/examples/generated/
+/diagram-generator/examples/*_generated*/
+
 # Local TeX runtime and generated files
 /.texmf/
 /.texmf-var/

@@ -1,0 +1,33 @@
+@startuml
+left to right direction
+actor "Student" as student
+actor "Supervisor" as supervisor
+actor "Normal Controller" as normal_controller <<right>>
+actor "GitHub Actions" as ci <<right>>
+actor "diagrams.net Editor" as drawio <<right>>
+
+rectangle "Diploma Diagram Toolkit" {
+  usecase "Render diagram from source" as UC_Render
+  usecase "Detect diagram notation" as UC_Detect
+  usecase "Validate style constraints" as UC_Validate
+  usecase "Generate editable .drawio" as UC_Drawio
+  usecase "Export PNG for note" as UC_Png
+  usecase "Generate diagnostics bundle" as UC_Diagnostics
+  usecase "Review generated result" as UC_Review
+  usecase "Run examples in CI" as UC_CI
+  usecase "Open and manually adjust diagram" as UC_Edit
+  usecase "Insert PNG into LaTeX note" as UC_Insert
+}
+
+student --> UC_Render
+supervisor --> UC_Review
+normal_controller --> UC_Validate
+ci --> UC_CI
+drawio --> UC_Edit
+UC_Render .> UC_Detect : <<include>>
+UC_Render .> UC_Validate : <<include>>
+UC_Validate .> UC_Drawio : <<include>>
+UC_Drawio .> UC_Png : <<include>>
+UC_Diagnostics .> UC_Validate : <<extend>>
+UC_Edit .> UC_Insert : <<include>>
+@enduml

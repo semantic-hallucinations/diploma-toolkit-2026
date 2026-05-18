@@ -1,0 +1,29 @@
+erDiagram
+    STUDENT {
+        uuid id PK
+        string email UK
+        string full_name
+        string group_code
+    }
+    DIPLOMA_PROJECT {
+        uuid id PK
+        uuid student_id FK
+        string topic
+        string status
+    }
+    REVIEW_TASK {
+        uuid id PK
+        uuid project_id FK
+        string task_type
+        datetime due_at
+    }
+    REVIEW_COMMENT {
+        uuid id PK
+        uuid task_id FK
+        text body
+        string severity
+    }
+
+    STUDENT ||--o{ DIPLOMA_PROJECT : owns
+    DIPLOMA_PROJECT ||--o{ REVIEW_TASK : schedules
+    REVIEW_TASK ||--o{ REVIEW_COMMENT : contains

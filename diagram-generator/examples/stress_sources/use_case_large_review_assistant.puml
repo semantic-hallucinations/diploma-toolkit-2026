@@ -1,0 +1,35 @@
+@startuml
+rectangle "Laboratory Scheduling Platform" {
+  usecase "Search available equipment" as UC_Search
+  usecase "Reserve workbench slot" as UC_Reserve
+  usecase "Confirm safety checklist" as UC_Checklist
+  usecase "Cancel reservation" as UC_Cancel
+  usecase "Receive unsafe condition alert" as UC_Alert
+  usecase "Open maintenance ticket" as UC_Ticket
+  usecase "Close repair ticket" as UC_Close
+  usecase "Configure access policy" as UC_Policy
+  usecase "Review utilization report" as UC_Report
+  usecase "Export audit log" as UC_Audit
+}
+
+actor "Student Researcher" as Student
+actor "Lab Technician" as Technician
+actor "Lab Administrator" as Admin
+actor "Sensor Gateway" as Gateway <<right>>
+actor "University SSO" as SSO <<right>>
+
+Student --> UC_Search : opens catalog
+Student --> UC_Reserve : books equipment
+Student --> UC_Cancel : changes plan
+Technician --> UC_Ticket : triages issue
+Technician --> UC_Close : finishes repair
+Admin --> UC_Policy : updates rules
+Admin --> UC_Report : reviews capacity
+Gateway --> UC_Alert : publishes reading
+SSO --> UC_Audit : provides identity event
+UC_Reserve ..> UC_Checklist : <<include>>
+UC_Reserve ..> UC_Audit : <<include>>
+UC_Alert ..> UC_Ticket : <<extend>>
+UC_Close ..> UC_Audit : <<include>>
+UC_Report ..> UC_Audit : <<include>>
+@enduml

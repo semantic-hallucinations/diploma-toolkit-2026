@@ -32,6 +32,48 @@
   `https://plantuml.com/skinparam`
 - draw.io documentation:
   `https://www.drawio.com/doc/`
+- draw.io custom libraries:
+  `https://www.drawio.com/blog/custom-libraries`
+- draw.io custom shape library format:
+  `https://www.drawio.com/doc/faq/format-custom-shape-library`
+- draw.io shapes:
+  `https://www.drawio.com/blog/shapes`
+- draw.io sequence diagrams:
+  `https://www.drawio.com/blog/sequence-diagrams.html`
+- draw.io UML class diagrams:
+  `https://www.drawio.com/blog/uml-class-diagrams`
+- draw.io crow's foot ERD:
+  `https://www.drawio.com/blog/crows-foot-notation`
+- draw.io deployment diagrams:
+  `https://drawio-app.com/blog/create-uml-deployment-diagrams-in-draw-io/`
+- draw.io use case diagrams:
+  `https://drawio-app.com/uml-use-case-diagrams-with-draw-io/`
+- C4 notation:
+  `https://c4model.com/diagrams/notation`
+- BSUIR draw.io drawing libraries, external reference:
+  `https://github.com/C010UR/draw-io-bsuir-drawing-libraries`
+- draw.io GOST skill, external reference:
+  `https://github.com/ast-ashulga/as.drawio-gost.skill`
+- PyFlowchart:
+  `https://pypi.org/project/pyflowchart/`
+- Flomatic:
+  `https://github.com/romilly/flomatic`
+- Code2flow:
+  `https://code2flow.com/`
+- code2flow open-source call graph tool:
+  `https://github.com/scottrogowski/code2flow`
+- Mermaid parse API:
+  `https://mermaid.js.org/config/usage.html`
+- Mermaid parser package:
+  `https://www.npmjs.com/package/@mermaid-js/parser`
+- PlantUML parser reference:
+  `https://github.com/Enteee/plantuml-parser`
+- Graphviz splines attribute:
+  `https://graphviz.org/docs/attrs/splines/`
+- Dagre layout:
+  `https://github.com/dagrejs/dagre`
+- Eclipse Layout Kernel:
+  `https://www.eclipse.org/elk/`
 
 Локальные материалы по оформлению диплома остаются в `standards/`.
 Для диаграмм важны:

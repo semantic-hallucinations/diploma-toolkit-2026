@@ -1,0 +1,24 @@
+%% profile: ml-pipeline
+flowchart TD
+    archive[(Uploaded thesis archive)] --> scan[Scan project tree]
+    scan --> readable{Has readable note source}
+    readable -->|no| reject[Create parser error bundle]
+    readable -->|yes| extract[Extract chapters and bibliography]
+    extract --> normalize[Normalize text and formulas]
+    normalize --> segment[Split into semantic sections]
+    segment --> embed[Build section embeddings]
+    embed --> compare[Compare with internal corpus]
+    compare --> cite{Citation coverage sufficient}
+    cite -->|no| citewarn[Flag weak citation coverage]
+    cite -->|yes| score[Score originality and structure]
+    score --> risk{Risk above review threshold}
+    risk -->|yes| fragments[Collect suspicious fragments]
+    risk -->|no| clean[Mark as low risk]
+    fragments --> report[Render supervisor report]
+    citewarn --> report
+    clean --> report
+    reject --> notify[Notify student about rebuild]
+    report --> store[Store PDF and JSON summary]
+    store --> dashboard[Update supervisor dashboard]
+    notify --> audit[Write audit event]
+    dashboard --> audit

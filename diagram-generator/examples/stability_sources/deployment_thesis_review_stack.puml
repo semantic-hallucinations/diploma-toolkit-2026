@@ -1,0 +1,57 @@
+@startuml
+node "Student Workstation" as workstation {
+  component "Browser" as browser
+  artifact "Project Archive" as archive
+}
+
+cloud "University DMZ" as dmz {
+  node "Reverse Proxy" as proxy {
+    component "TLS Gateway" as tls
+    component "Upload Limit Filter" as upload_filter
+  }
+}
+
+cloud "Review Kubernetes Cluster" as cluster {
+  node "Web Namespace" as web_ns {
+    component "Portal Pod" as portal_pod
+    component "Supervisor Console Pod" as supervisor_pod
+  }
+  node "Core Namespace" as core_ns {
+    component "Review API Pod" as api_pod
+    component "Archive Importer Job" as importer_job
+    component "Parser Worker Pod" as parser_pod
+    component "Similarity Worker Pod" as similarity_pod
+    component "Report Builder Pod" as report_pod
+    queue "Review Job Queue" as job_queue
+  }
+  database "PostgreSQL Primary" as postgres
+  database "Object Store" as object_store
+}
+
+cloud "University Services" as university {
+  component "SSO Provider" as sso
+  component "Mail Relay" as mail
+  database "Citation Metadata Cache" as citation_cache
+}
+
+browser --> tls : HTTPS
+archive --> portal_pod : upload payload
+tls --> upload_filter : inspect body
+upload_filter --> portal_pod : route upload
+portal_pod --> api_pod : create submission
+supervisor_pod --> api_pod : read decisions
+api_pod --> sso : token introspection
+api_pod --> postgres : write project state
+api_pod --> object_store : store archive
+api_pod --> job_queue : enqueue review
+job_queue --> importer_job : import request
+importer_job --> object_store : read archive
+importer_job --> parser_pod : parsed source batch
+parser_pod --> citation_cache : bibliography lookup
+parser_pod --> similarity_pod : normalized sections
+similarity_pod --> report_pod : ranked findings
+report_pod --> object_store : write report PDF
+report_pod --> postgres : update report row
+api_pod --> mail : notify user
+postgres --> object_store : daily logical backup
+@enduml

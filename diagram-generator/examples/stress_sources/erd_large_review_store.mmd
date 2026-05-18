@@ -1,0 +1,76 @@
+erDiagram
+    LAB_USER {
+        uuid id PK
+        string email UK
+        string role
+        string department
+    }
+    LAB_ROOM {
+        uuid id PK
+        string building
+        string room_number
+        string safety_level
+    }
+    WORKBENCH {
+        uuid id PK
+        uuid room_id FK
+        string label
+        int capacity
+    }
+    EQUIPMENT_ASSET {
+        uuid id PK
+        uuid workbench_id FK
+        string inventory_code UK
+        string asset_type
+        string state
+    }
+    RESERVATION {
+        uuid id PK
+        uuid user_id FK
+        uuid asset_id FK
+        datetime starts_at
+        datetime ends_at
+        string status
+    }
+    SENSOR_DEVICE {
+        uuid id PK
+        uuid asset_id FK
+        string serial_number UK
+        string metric_kind
+    }
+    SENSOR_READING {
+        uuid id PK
+        uuid sensor_id FK
+        datetime captured_at
+        float value
+    }
+    ALERT_EVENT {
+        uuid id PK
+        uuid reading_id FK
+        string severity
+        string message
+    }
+    MAINTENANCE_TICKET {
+        uuid id PK
+        uuid asset_id FK
+        uuid opened_by FK
+        string status
+        datetime opened_at
+    }
+    POLICY_RULE {
+        uuid id PK
+        string code UK
+        string rule_type
+        string severity
+    }
+
+    LAB_ROOM ||--o{ WORKBENCH : contains
+    WORKBENCH ||--o{ EQUIPMENT_ASSET : hosts
+    LAB_USER ||--o{ RESERVATION : creates
+    EQUIPMENT_ASSET ||--o{ RESERVATION : booked_for
+    EQUIPMENT_ASSET ||--o{ SENSOR_DEVICE : monitored_by
+    SENSOR_DEVICE ||--o{ SENSOR_READING : emits
+    SENSOR_READING ||--o{ ALERT_EVENT : triggers
+    EQUIPMENT_ASSET ||--o{ MAINTENANCE_TICKET : repaired_by
+    LAB_USER ||--o{ MAINTENANCE_TICKET : opens
+    POLICY_RULE ||--o{ RESERVATION : constrains

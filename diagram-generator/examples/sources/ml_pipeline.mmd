@@ -1,0 +1,17 @@
+%% profile: ml-pipeline
+flowchart LR
+    raw[(Raw BSUIR project documents)] --> ingest[Ingest files and metadata]
+    ingest --> validate{Validate format and encoding}
+    validate -->|valid| extract[Extract text, tables and figures]
+    validate -->|invalid| reject[Create diagnostics bundle]
+    extract --> clean[Normalize typography and section markers]
+    clean --> split[Train validation test split]
+    split --> features[Build semantic and layout features]
+    features --> train[Train document quality classifier]
+    train --> eval{Evaluate metrics and drift}
+    eval -->|accepted| registry[(Model registry)]
+    registry --> deploy[Package inference model]
+    deploy --> api[Inference API]
+    api --> post[Postprocess warnings and recommendations]
+    post --> report[Generate normal-control report]
+    reject --> report

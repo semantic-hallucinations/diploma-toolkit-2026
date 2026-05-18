@@ -1,0 +1,34 @@
+sequenceDiagram
+    actor Student as Student
+    participant Portal as Diploma Portal
+    participant Api as Review API
+    participant Queue as Build Queue
+    participant Worker as PDF Worker
+    database Db as Metadata DB
+    participant Storage as Artifact Storage
+    participant Mail as Notification Service
+
+    Student->>Portal: Upload note sources
+    Portal->>Api: POST /builds with project path
+    Api->>Db: Create build request
+    Api->>Queue: Enqueue PDF build
+    Queue-->>Api: build_id
+    Api-->>Portal: 202 Accepted
+    loop Wait for build
+        Portal->>Api: GET /builds/{build_id}
+        Api->>Db: Read build status
+        Db-->>Api: status snapshot
+        Api-->>Portal: status and diagnostics
+    end
+    Worker->>Queue: Claim build task
+    Worker->>Storage: Read source bundle
+    alt Build succeeds
+        Worker->>Storage: Save PDF artifact
+        Worker->>Db: Mark build completed
+        Worker->>Mail: Send result link
+    else Build fails
+        Worker->>Storage: Save error bundle
+        Worker->>Db: Mark build failed
+        Worker->>Mail: Send readable error summary
+    end
+    Portal-->>Student: Show final build state

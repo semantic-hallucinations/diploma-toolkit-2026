@@ -1,0 +1,48 @@
+@startuml
+node "Campus Network" as campus {
+  node "Researcher Browser" as browser {
+    component "Calendar UI" as calendar_ui
+  }
+  node "Instrument Gateway" as gateway {
+    component "MQTT Agent" as mqtt_agent
+    component "Sensor Collector" as sensor_collector
+  }
+}
+
+cloud "University Kubernetes" as k8s {
+  node "Ingress Namespace" as ingress_ns {
+    component "TLS Ingress" as tls_ingress
+    component "SSO Callback" as sso_callback
+  }
+  node "Application Namespace" as app_ns {
+    component "Scheduling API Pod" as scheduling_pod
+    component "Policy Engine Pod" as policy_pod
+    component "Alert Worker Pod" as alert_pod
+    component "Report Worker Pod" as report_pod
+    queue "Telemetry Topic" as telemetry_topic
+  }
+  database "PostgreSQL Cluster" as postgres
+  database "Timescale Cluster" as timescale
+}
+
+cloud "External Services" as external {
+  component "University SSO" as sso
+  component "Mail and Chat Gateway" as notify
+  database "Object Backup Storage" as backups
+}
+
+calendar_ui --> tls_ingress : HTTPS requests
+tls_ingress --> scheduling_pod : route API calls
+sso_callback --> sso : OAuth exchange
+scheduling_pod --> policy_pod : policy decision
+scheduling_pod --> postgres : reservation writes
+sensor_collector --> mqtt_agent : local frames
+mqtt_agent --> telemetry_topic : publish MQTT
+telemetry_topic --> alert_pod : consume events
+alert_pod --> timescale : append telemetry
+alert_pod --> notify : send alert
+report_pod --> postgres : query reservations
+report_pod --> timescale : query aggregates
+postgres --> backups : nightly dump
+timescale --> backups : compressed chunks
+@enduml

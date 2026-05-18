@@ -1,0 +1,17 @@
+@startuml
+!include <C4/C4_Container>
+
+Person(author, "Diploma Author", "Prepares sources and checks generated output")
+System_Ext(university, "University Portal", "Stores assignment metadata")
+
+System_Boundary(reviewkit, "Review Automation Service") {
+  Container(cli, "Review CLI", "Python", "Accepts local project path")
+  Container(core, "Review Core", "Python", "Builds validation model and render plan")
+  ContainerDb(files, "Artifacts Store", "Filesystem", "Keeps reports and generated PNG")
+}
+
+Rel(author, cli, "Starts review")
+Rel(cli, core, "Passes source directory")
+Rel(cli, files, "Writes artifacts")
+Rel(core, university, "Reads topic metadata")
+@enduml

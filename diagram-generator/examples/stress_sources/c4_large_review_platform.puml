@@ -1,0 +1,37 @@
+@startuml
+!include <C4/C4_Container>
+
+Person(student, "Student Researcher", "Books equipment and receives safety alerts")
+Person(technician, "Lab Technician", "Maintains instruments and resolves incidents")
+Person(admin, "Lab Administrator", "Configures policies and access rules")
+System_Ext(identity, "University SSO", "Authentication and group membership")
+System_Ext(messenger, "Notification Gateway", "Email and chat delivery")
+
+System_Boundary(lab_system, "Laboratory Scheduling Platform") {
+  Container(webapp, "Researcher Web App", "TypeScript", "Reservation calendar and equipment status")
+  Container(api_service, "Scheduling API", "Python", "Validates bookings and access rules")
+  Container(policy_engine, "Policy Engine", "Python", "Checks quotas, conflicts and restricted hours")
+  Container(telemetry_ingest, "Telemetry Ingest", "Go", "Consumes gateway measurements")
+  Container(alert_service, "Alert Service", "Python", "Detects unsafe temperature and humidity")
+  Container(ticket_service, "Maintenance Service", "Python", "Tracks incidents and repairs")
+  Container(report_service, "Report Builder", "Python", "Builds occupancy and reliability reports")
+  ContainerDb(reservation_db, "Reservation Database", "PostgreSQL", "Users, assets and reservations")
+  ContainerDb(timeseries_db, "Telemetry Store", "TimescaleDB", "Sensor readings and alerts")
+}
+
+Rel(student, webapp, "Books bench time", "HTTPS")
+Rel(technician, ticket_service, "Updates repair state", "HTTPS")
+Rel(admin, policy_engine, "Changes lab policy", "admin UI")
+Rel(webapp, api_service, "Submits reservation", "JSON API")
+Rel(api_service, identity, "Verifies groups", "OIDC")
+Rel(api_service, policy_engine, "Checks reservation rules", "Python call")
+Rel(api_service, reservation_db, "Stores reservation", "SQL")
+Rel(telemetry_ingest, timeseries_db, "Writes measurements", "batch insert")
+Rel(telemetry_ingest, alert_service, "Streams recent frames", "events")
+Rel(alert_service, timeseries_db, "Reads thresholds and history", "SQL")
+Rel(alert_service, ticket_service, "Creates incident ticket", "internal API")
+Rel(ticket_service, messenger, "Sends repair alert", "webhook")
+Rel(report_service, reservation_db, "Reads utilization data", "SQL")
+Rel(report_service, timeseries_db, "Reads telemetry aggregates", "SQL")
+Rel(report_service, webapp, "Publishes dashboards", "HTML")
+@enduml

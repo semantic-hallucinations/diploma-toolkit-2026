@@ -1,0 +1,75 @@
+erDiagram
+    STUDENT {
+        uuid id PK
+        string email UK
+        string group_code
+        string department
+    }
+    SUPERVISOR {
+        uuid id PK
+        string email UK
+        string academic_rank
+    }
+    THESIS_PROJECT {
+        uuid id PK
+        uuid student_id FK
+        uuid supervisor_id FK
+        string topic
+        string status
+    }
+    SUBMISSION {
+        uuid id PK
+        uuid project_id FK
+        datetime uploaded_at
+        string archive_hash UK
+        string status
+    }
+    SOURCE_FILE {
+        uuid id PK
+        uuid submission_id FK
+        string path
+        string mime_type
+    }
+    REVIEW_JOB {
+        uuid id PK
+        uuid submission_id FK
+        string state
+        int attempt
+    }
+    ANALYSIS_FINDING {
+        uuid id PK
+        uuid job_id FK
+        string severity
+        string category
+        string message
+    }
+    CITATION {
+        uuid id PK
+        uuid submission_id FK
+        string normalized_text
+        string doi
+    }
+    REVIEW_REPORT {
+        uuid id PK
+        uuid job_id FK
+        string pdf_path
+        datetime generated_at
+    }
+    DECISION {
+        uuid id PK
+        uuid report_id FK
+        uuid supervisor_id FK
+        string verdict
+        datetime decided_at
+    }
+
+    STUDENT ||--o{ THESIS_PROJECT : owns
+    SUPERVISOR ||--o{ THESIS_PROJECT : supervises
+    THESIS_PROJECT ||--o{ SUBMISSION : receives
+    SUBMISSION ||--o{ SOURCE_FILE : contains
+    SUBMISSION ||--o{ REVIEW_JOB : starts
+    REVIEW_JOB ||--o{ ANALYSIS_FINDING : emits
+    SUBMISSION ||--o{ CITATION : references
+    REVIEW_JOB ||--|| REVIEW_REPORT : produces
+    REVIEW_REPORT ||--o{ DECISION : reviewed_by
+    SUPERVISOR ||--o{ DECISION : makes

@@ -1,0 +1,82 @@
+erDiagram
+    USER {
+        uuid id PK
+        string email UK
+        string full_name
+        string role
+        datetime created_at
+    }
+    PROJECT {
+        uuid id PK
+        uuid owner_id FK
+        string title
+        string specialty
+        string supervisor
+        datetime updated_at
+    }
+    DIAGRAM_SOURCE {
+        uuid id PK
+        uuid project_id FK
+        string notation
+        string profile
+        string path
+        text source_hash
+    }
+    RENDER_JOB {
+        uuid id PK
+        uuid source_id FK
+        string status
+        string image_format
+        datetime started_at
+        datetime finished_at
+    }
+    ARTIFACT {
+        uuid id PK
+        uuid job_id FK
+        string artifact_type
+        string path
+        integer size_bytes
+    }
+    VALIDATION_RESULT {
+        uuid id PK
+        uuid job_id FK
+        string severity
+        string rule_code
+        text message
+    }
+    STYLE_PROFILE {
+        uuid id PK
+        string name UK
+        string font_family
+        float line_width_mm
+        boolean monochrome
+    }
+    DIAGRAM_PROFILE {
+        uuid id PK
+        string name UK
+        string notation_family
+        boolean strict_gost
+    }
+    PROJECT_MEMBER {
+        uuid project_id FK
+        uuid user_id FK
+        string member_role
+    }
+    BUILD_ERROR_BUNDLE {
+        uuid id PK
+        uuid job_id FK
+        string directory_name
+        string log_path
+        string diagnostics_path
+    }
+
+    USER ||--o{ PROJECT : owns
+    USER ||--o{ PROJECT_MEMBER : participates
+    PROJECT ||--o{ PROJECT_MEMBER : has
+    PROJECT ||--o{ DIAGRAM_SOURCE : contains
+    DIAGRAM_SOURCE ||--o{ RENDER_JOB : renders
+    RENDER_JOB ||--o{ ARTIFACT : produces
+    RENDER_JOB ||--o{ VALIDATION_RESULT : reports
+    RENDER_JOB ||--o| BUILD_ERROR_BUNDLE : stores
+    STYLE_PROFILE ||--o{ RENDER_JOB : applies
+    DIAGRAM_PROFILE ||--o{ DIAGRAM_SOURCE : classifies

@@ -1,0 +1,25 @@
+@startuml
+left to right direction
+actor "Diploma Author" as author
+actor "Reviewer" as reviewer
+actor "CI Runner" as ci <<right>>
+
+rectangle "Diploma Review Assistant" {
+  usecase "Start local review" as Start
+  usecase "Load project sources" as Load
+  usecase "Render diagrams" as Render
+  usecase "Check formatting risks" as Check
+  usecase "Open generated report" as OpenReport
+  usecase "Run smoke examples" as Smoke
+  usecase "Inspect failed artifact" as Inspect
+}
+
+author --> Start
+reviewer --> OpenReport
+ci --> Smoke
+Start .> Load : <<include>>
+Start .> Render : <<include>>
+Start .> Check : <<include>>
+Smoke .> Render : <<include>>
+Inspect .> OpenReport : <<extend>>
+@enduml

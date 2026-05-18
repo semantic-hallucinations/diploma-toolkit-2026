@@ -1,0 +1,41 @@
+sequenceDiagram
+    actor Student as Diploma Student
+    participant Portal as Thesis Portal
+    participant API as Review API
+    participant Queue as Analysis Queue
+    participant Parser as Document Parser
+    participant Model as Similarity Model
+    database Repo as Submission Store
+    database Index as Citation Index
+    participant Supervisor as Supervisor Console
+    participant Notify as Notification Service
+
+    Student->>Portal: Upload explanatory note
+    Portal->>API: Create submission record
+    API->>Repo: Store source archive
+    API->>Queue: Enqueue review job
+    loop For every uploaded document
+        Queue->>Parser: Extract text and metadata
+        Parser->>Index: Resolve bibliography references
+        alt Source is readable
+            Parser-->>Queue: Parsed document model
+            Queue->>Model: Score similarity and structure
+            Model-->>Queue: Risk score and fragments
+        else Source has format error
+            Parser-->>Queue: Parser diagnostics
+            Queue->>Notify: Ask student to reupload
+            Notify-->>Student: Send correction notice
+        end
+    end
+    Queue->>API: Save review result
+    API->>Repo: Attach rendered report
+    API->>Supervisor: Publish review card
+    alt Supervisor approves
+        Supervisor->>API: Mark as ready for defense
+        API->>Notify: Send approval message
+        Notify-->>Student: Defense package accepted
+    else Supervisor requests changes
+        Supervisor->>API: Create revision task
+        API->>Notify: Send revision list
+        Notify-->>Student: Update required sections
+    end

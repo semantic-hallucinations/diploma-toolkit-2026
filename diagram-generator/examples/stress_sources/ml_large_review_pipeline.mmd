@@ -1,0 +1,19 @@
+%% profile: ml-pipeline
+flowchart TD
+    raw[(Gateway telemetry stream)] --> window[Build five minute windows]
+    window --> missing{Enough sensor coverage}
+    missing -->|no| quarantine[Quarantine incomplete batch]
+    missing -->|yes| clean[Remove impossible readings]
+    clean --> features[Create humidity and heat drift features]
+    features --> join[Join reservation occupancy context]
+    join --> score[Score anomaly model]
+    score --> threshold{Risk above threshold}
+    threshold -->|yes| incident[Create maintenance incident]
+    threshold -->|no| archive[Archive healthy window]
+    incident --> notify[Notify technician]
+    incident --> ticket[Attach readings to ticket]
+    archive --> dashboard[Update reliability dashboard]
+    quarantine --> audit[Write data quality audit]
+    notify --> audit
+    ticket --> audit
+    dashboard --> audit

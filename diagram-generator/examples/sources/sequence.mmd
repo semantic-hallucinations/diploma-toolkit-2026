@@ -1,0 +1,36 @@
+sequenceDiagram
+    actor Student as Student
+    participant UI as Web Portal
+    participant API as Diploma API
+    participant Queue as Build Queue
+    participant Compiler as Compiler Worker
+    database DB as Metadata DB
+    participant Storage as Object Storage
+    participant Notify as Notification Service
+
+    Student->>UI: Upload diagram source and select profile
+    UI->>API: POST /diagrams with source file
+    API->>DB: Create diagram record
+    API->>Queue: Enqueue render job
+    Queue-->>API: job_id
+    API-->>UI: 202 Accepted with job status URL
+    loop Poll until completed
+        UI->>API: GET /jobs/{job_id}
+        API->>DB: Read render status
+        API-->>UI: status and validation summary
+    end
+    Queue->>Compiler: Start isolated render job
+    Compiler->>Compiler: Parse source and detect profile
+    alt Source is valid
+        Compiler->>Compiler: Layout elements and route connectors
+        Compiler->>Storage: Save .drawio and PNG artifacts
+        Compiler->>DB: Mark job as completed
+        Notify-->>Student: Send result link
+    else Source has unsupported notation
+        Compiler->>Storage: Save diagnostics bundle
+        Compiler->>DB: Mark job as failed
+        Notify-->>Student: Send readable error summary
+    end
+    Student->>UI: Open PNG preview
+    UI->>Storage: Download PNG artifact
+    Storage-->>UI: Rendered diagram PNG
