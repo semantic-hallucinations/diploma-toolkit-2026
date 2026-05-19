@@ -47,6 +47,8 @@ PYTHONPATH=diagram-generator/src python3 -m diagram_toolkit validate \
   draw.io и PNG.
 - `docs/layout-methodology.md` - методика автоматического расположения
   элементов и критерии качества layout.
+- `docs/visual-review-checklist.md` - чек-лист типичных визуальных артефактов,
+  которые нужно проверять на PNG после генерации.
 - `docs/code-flowchart-tools.md` - готовые инструменты для извлечения
   блок-схем/графов из кода и как их безопасно использовать.
 - `docs/target-diagram-profiles.md` - целевые профили для sequence, class,
