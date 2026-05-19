@@ -1,0 +1,75 @@
+classDiagram
+    class DiagramProject {
+        +uuid id
+        +string title
+        -string secretToken
+        #validatePolicy()
+        +renderAll()
+    }
+    class DiagramSource {
+        +Path path
+        +string notation
+        ~string checksum
+        +readText()
+    }
+    class DiagramModel {
+        +string profile
+        +Node[] nodes
+        +Edge[] edges
+        +normalize()
+    }
+    class Node {
+        +string id
+        +string type
+        +dict metadata
+    }
+    class Edge {
+        +string source
+        +string target
+        +string relationType
+    }
+    class SourceParser {
+        <<interface>>
+        +supports(source)
+        +parse(source)
+    }
+    class MermaidParser {
+        +parseClass()
+        +parseSequence()
+    }
+    class PlantUmlParser {
+        +parseUseCase()
+        +parseDeployment()
+    }
+    class LayoutEngine {
+        +layout(model)
+        +score(canvas)
+    }
+    class OrthogonalRouter {
+        +route(source, target)
+        +countCrossings()
+    }
+    class DrawioWriter {
+        +write(canvas)
+        +writeMxCell()
+    }
+    class PngExporter {
+        +export(canvas)
+        +verifyImage()
+    }
+    class DiagramValidator {
+        +checkOverlaps()
+        +checkTextBounds()
+    }
+
+    SourceParser <|.. MermaidParser : implements
+    SourceParser <|.. PlantUmlParser : implements
+    LayoutEngine <|-- OrthogonalRouter : extends
+    DiagramProject o-- DiagramSource : references
+    DiagramProject *-- DiagramModel : owns model
+    DiagramModel *-- Node : contains
+    DiagramModel *-- Edge : contains
+    DiagramValidator --> DiagramModel : validates
+    OrthogonalRouter --> Edge : routes
+    DrawioWriter ..> DiagramModel : reads
+    PngExporter --> DrawioWriter : uses output

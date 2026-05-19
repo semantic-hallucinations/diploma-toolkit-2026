@@ -1,0 +1,41 @@
+@startuml
+!include <C4/C4_Container>
+
+Person(student, "Diploma Student", "Uploads project sources and reads review feedback")
+Person(supervisor, "Supervisor", "Reviews generated findings and decides readiness")
+Person(secretary, "Department Secretary", "Checks submission completeness")
+System_Ext(sso, "University SSO", "Authentication and roles")
+System_Ext(mail, "Mail Gateway", "Email delivery")
+System_Ext(index, "Citation Index", "External bibliography metadata")
+
+System_Boundary(review_system, "Diploma Review Platform") {
+  Container(portal, "Student Portal", "TypeScript", "Upload forms and feedback timeline")
+  Container(api, "Review API", "Python", "Submission lifecycle and access rules")
+  Container(importer, "Archive Importer", "Python", "Unpacks and validates source archives")
+  Container(parser, "Document Parser", "Python", "Extracts text, structure and bibliography")
+  Container(similarity, "Similarity Analyzer", "Python", "Ranks suspicious fragments")
+  Container(reporting, "Report Builder", "Python", "Builds supervisor review PDF")
+  Container(supervisor_ui, "Supervisor Console", "TypeScript", "Decision and comment workflow")
+  ContainerDb(project_db, "Project Database", "PostgreSQL", "Projects, jobs and decisions")
+  ContainerDb(object_store, "Object Storage", "S3 compatible", "Archives, reports and extracts")
+}
+
+Rel(student, portal, "Uploads archive", "HTTPS")
+Rel(supervisor, supervisor_ui, "Reviews report", "HTTPS")
+Rel(secretary, supervisor_ui, "Checks completeness", "HTTPS")
+Rel(portal, api, "Creates submission", "JSON API")
+Rel(supervisor_ui, api, "Writes decision", "JSON API")
+Rel(api, sso, "Verifies role", "OIDC")
+Rel(api, project_db, "Stores metadata", "SQL")
+Rel(api, object_store, "Stores raw archive", "S3 API")
+Rel(api, importer, "Starts import job", "internal call")
+Rel(importer, object_store, "Reads archive files", "S3 API")
+Rel(importer, parser, "Sends accepted documents", "job payload")
+Rel(parser, index, "Resolves citations", "HTTP")
+Rel(parser, similarity, "Sends normalized text", "internal call")
+Rel(similarity, reporting, "Provides findings", "job payload")
+Rel(reporting, object_store, "Writes PDF report", "S3 API")
+Rel(reporting, project_db, "Stores report status", "SQL")
+Rel(api, mail, "Sends state change", "SMTP")
+Rel(supervisor_ui, object_store, "Downloads report", "signed URL")
+@enduml

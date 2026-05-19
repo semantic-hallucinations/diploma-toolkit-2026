@@ -1,0 +1,92 @@
+classDiagram
+    class LabReservation {
+        +uuid id
+        +datetime startsAt
+        +datetime endsAt
+        +confirm()
+        +cancel()
+    }
+    class ReservationPolicy {
+        +int maxHours
+        +bool allowNightUse
+        +validateWindow()
+        +explainConflict()
+    }
+    class EquipmentAsset {
+        +uuid id
+        +string inventoryCode
+        +string state
+        +reserve()
+        +release()
+    }
+    class Workbench {
+        +string room
+        +int seatCount
+        +attachAsset()
+        +scheduleMaintenance()
+    }
+    class SensorGateway {
+        +string serialNumber
+        +string firmwareVersion
+        +publishTelemetry()
+    }
+    class TelemetryFrame {
+        +datetime capturedAt
+        +float temperature
+        +float humidity
+        +normalize()
+    }
+    class TelemetryStore {
+        +Path segmentPath
+        +appendFrame()
+        +queryRange()
+    }
+    class MaintenanceTicket {
+        +uuid id
+        +string severity
+        +open()
+        +close()
+    }
+    class AlertRule {
+        +string metric
+        +float threshold
+        +evaluate()
+    }
+    class NotificationChannel {
+        <<interface>>
+        +send()
+        +supports()
+    }
+    class EmailChannel {
+        +renderEmail()
+        +send()
+    }
+    class TelegramChannel {
+        +formatMessage()
+        +send()
+    }
+    class AuditTrail {
+        +uuid actorId
+        +string action
+        +record()
+    }
+    class LabUser {
+        +uuid id
+        +string role
+        +requestAccess()
+    }
+
+    LabUser --> LabReservation : creates
+    LabReservation *-- ReservationPolicy : checks
+    LabReservation o-- EquipmentAsset : books
+    Workbench *-- EquipmentAsset : hosts
+    EquipmentAsset --> MaintenanceTicket : reports
+    SensorGateway --> TelemetryFrame : emits
+    TelemetryFrame --> TelemetryStore : persists
+    AlertRule --> TelemetryFrame : evaluates
+    AlertRule --> MaintenanceTicket : opens
+    MaintenanceTicket --> NotificationChannel : notifies
+    NotificationChannel <|.. EmailChannel : implements
+    NotificationChannel <|.. TelegramChannel : implements
+    LabReservation --> AuditTrail : records
+    MaintenanceTicket --> AuditTrail : records

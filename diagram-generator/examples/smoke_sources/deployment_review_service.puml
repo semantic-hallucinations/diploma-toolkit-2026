@@ -1,0 +1,8 @@
+@startuml
+artifact "Diploma Sources" as review_sources
+node "Review Tool Runtime" as review_runtime
+artifact "Generated Report" as review_report
+
+review_sources --> review_runtime : mounted path
+review_runtime --> review_report : writes report
+@enduml

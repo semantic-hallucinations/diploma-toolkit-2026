@@ -1,0 +1,29 @@
+@startuml
+!include <C4/C4_Container>
+
+Person(student, "Student", "Prepares diploma explanatory note")
+Person(supervisor, "Supervisor", "Reviews generated diagrams and PDF")
+System_Ext(bsuir, "BSUIR Template", "LaTeX diploma template and standards")
+System_Ext(github, "GitHub", "Stores source files and runs CI")
+System_Ext(drawio, "diagrams.net", "Manual editing of .drawio artifacts")
+
+System_Boundary(toolkit, "Diploma Toolkit") {
+  Container(web, "Web/CLI Frontend", "Python CLI", "Accepts diagram sources and project paths")
+  Container(api, "Toolkit Core", "Python", "Detects notation, normalizes model and validates rules")
+  Container(renderer, "Draw.io Renderer", "mxGraphModel", "Writes editable .drawio XML")
+  Container(exporter, "PNG Exporter", "Pillow/Draw.io CLI", "Exports images for the explanatory note")
+  ContainerDb(storage, "Artifacts Directory", "Filesystem", "Stores PNG, .drawio and diagnostics")
+  ContainerDb(cache, "Metadata Cache", "SQLite", "Tracks render jobs and validation results")
+}
+
+Rel(student, web, "Runs render command", "local filesystem")
+Rel(supervisor, storage, "Reviews PNG artifacts", "PDF/PNG")
+Rel(web, api, "Passes source path and target profile", "Python API")
+Rel(api, renderer, "Sends normalized diagram model", "in-process")
+Rel(renderer, exporter, "Provides .drawio source", "file")
+Rel(exporter, storage, "Writes PNG and .drawio", "filesystem")
+Rel(api, cache, "Stores status and validation summary", "SQLite")
+Rel(api, bsuir, "Uses formatting constraints", "local docs")
+Rel(github, web, "Triggers sample generation in CI", "workflow")
+Rel(drawio, storage, "Can open/edit .drawio files", "manual")
+@enduml

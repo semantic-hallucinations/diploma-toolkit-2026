@@ -1,0 +1,12 @@
+%% profile: ml-pipeline
+flowchart LR
+    raw[(Submitted diploma archive)] --> ingest[Extract safe project copy]
+    ingest --> validate{Detect document type}
+    validate -->|valid| extract[Parse sections and figures]
+    extract --> clean[Normalize layout features]
+    clean --> split[Build review batches]
+    split --> features[Compute style metrics]
+    features --> train[Score formatting risks]
+    train --> eval{Review threshold}
+    eval -->|accepted| registry[(Report artifact)]
+    registry --> deploy[Publish result]

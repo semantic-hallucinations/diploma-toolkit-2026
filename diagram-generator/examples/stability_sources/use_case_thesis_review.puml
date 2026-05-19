@@ -1,0 +1,39 @@
+@startuml
+rectangle "Diploma Review Platform" {
+  usecase "Upload thesis archive" as UC_Upload
+  usecase "Validate project structure" as UC_Validate
+  usecase "Run similarity analysis" as UC_Analyze
+  usecase "Resolve bibliography" as UC_Citations
+  usecase "Generate review report" as UC_Report
+  usecase "Review findings" as UC_Findings
+  usecase "Approve defense package" as UC_Approve
+  usecase "Request student revision" as UC_Revision
+  usecase "Check submission completeness" as UC_Completeness
+  usecase "Export audit history" as UC_Audit
+  usecase "Notify participant" as UC_Notify
+}
+
+actor "Diploma Student" as Student
+actor "Supervisor" as Supervisor
+actor "Department Secretary" as Secretary
+actor "Citation Index" as CitationIndex <<right>>
+actor "Mail Gateway" as Mail <<right>>
+
+Student --> UC_Upload : submits source
+Student --> UC_Revision : reads tasks
+Supervisor --> UC_Findings : inspects report
+Supervisor --> UC_Approve : accepts package
+Supervisor --> UC_Revision : requests changes
+Secretary --> UC_Completeness : checks files
+CitationIndex --> UC_Citations : returns metadata
+Mail --> UC_Notify : delivers message
+UC_Upload ..> UC_Validate : <<include>>
+UC_Validate ..> UC_Analyze : <<include>>
+UC_Analyze ..> UC_Citations : <<include>>
+UC_Analyze ..> UC_Report : <<include>>
+UC_Findings ..> UC_Report : <<include>>
+UC_Approve ..> UC_Audit : <<include>>
+UC_Revision ..> UC_Notify : <<include>>
+UC_Completeness ..> UC_Audit : <<include>>
+UC_Report ..> UC_Audit : <<include>>
+@enduml

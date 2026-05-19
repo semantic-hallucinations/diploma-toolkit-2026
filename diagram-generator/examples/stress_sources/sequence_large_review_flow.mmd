@@ -1,0 +1,41 @@
+sequenceDiagram
+    actor Researcher as Student Researcher
+    participant Web as Lab Web App
+    participant API as Scheduling API
+    participant Policy as Policy Engine
+    participant SSO as University SSO
+    database DB as Reservation DB
+    participant Gateway as Sensor Gateway
+    participant Alert as Alert Service
+    participant Ticket as Maintenance Service
+    participant Notify as Notification Gateway
+
+    Researcher->>Web: Select equipment and time slot
+    Web->>API: Create reservation draft
+    API->>SSO: Verify researcher group
+    SSO-->>API: Group membership
+    API->>Policy: Check quota, room level and conflicts
+    alt Slot is allowed
+        Policy-->>API: Accepted
+        API->>DB: Save confirmed reservation
+        API-->>Web: Reservation confirmation
+        Web-->>Researcher: Show booking code
+    else Slot violates policy
+        Policy-->>API: Rejection reason
+        API-->>Web: Policy explanation
+        Web-->>Researcher: Show alternatives
+    end
+    loop During reserved session
+        Gateway->>Alert: Publish temperature and humidity frame
+        Alert->>DB: Read active reservation and asset owner
+        alt Unsafe reading detected
+            Alert->>Ticket: Open maintenance ticket
+            Ticket->>Notify: Send technician alert
+            Notify-->>Researcher: Send safety notice
+        else Reading normal
+            Alert-->>Gateway: Acknowledge frame
+        end
+    end
+    Researcher->>Web: Finish session
+    Web->>API: Release equipment
+    API->>DB: Mark reservation completed

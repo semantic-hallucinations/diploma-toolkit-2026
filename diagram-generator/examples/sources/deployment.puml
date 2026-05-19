@@ -1,0 +1,24 @@
+@startuml
+node "Student Laptop" as laptop {
+  artifact "Diagram Sources" as sources
+  artifact "Rendered PNGs" as pngs
+}
+
+cloud "Local Docker Runtime" as docker {
+  node "Diagram Generator Container" as generator {
+    artifact "diagram-toolkit CLI" as cli
+    artifact "PNG Exporter" as exporter
+  }
+}
+
+node "Diploma Repository" as repo {
+  artifact "diagram-generator/" as diagram_src
+  artifact "examples/" as examples
+}
+
+sources --> cli : mounted input
+diagram_src --> cli : generator source
+examples --> cli : sample inputs
+cli --> exporter : routed model
+exporter --> pngs : writes PNG
+@enduml
